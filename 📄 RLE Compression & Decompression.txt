@@ -1,0 +1,98 @@
+📄 RLE Compression & Decompression in C
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
+// Function to compress text using RLE
+void compressFile(const char *inputPath, const char *outputPath) {
+    FILE *in = fopen(inputPath, "r");
+    FILE *out = fopen(outputPath, "w");
+
+    if (!in || !out) {
+        printf("Error opening files.\n");
+        return;
+    }
+
+    char current, previous;
+    int count = 1;
+
+    previous = fgetc(in);
+    if (previous == EOF) {
+        fclose(in);
+        fclose(out);
+        return;
+    }
+
+    while ((current = fgetc(in)) != EOF) {
+        if (current == previous) {
+            count++;
+        } else {
+            fprintf(out, "%d%c", count, previous);
+            count = 1;
+        }
+        previous = current;
+    }
+    fprintf(out, "%d%c", count, previous);  // Final write
+
+    fclose(in);
+    fclose(out);
+    printf("Compression complete. Output saved to %s\n", outputPath);
+}
+
+// Function to decompress text using RLE
+void decompressFile(const char *inputPath, const char *outputPath) {
+    FILE *in = fopen(inputPath, "r");
+    FILE *out = fopen(outputPath, "w");
+
+    if (!in || !out) {
+        printf("Error opening files.\n");
+        return;
+    }
+
+    char ch;
+    int count = 0;
+
+    while ((ch = fgetc(in)) != EOF) {
+        if (isdigit(ch)) {
+            count = count * 10 + (ch - '0');  // Handle multi-digit counts
+        } else {
+            for (int i = 0; i < count; i++) {
+                fputc(ch, out);
+            }
+            count = 0;
+        }
+    }
+
+    fclose(in);
+    fclose(out);
+    printf("Decompression complete. Output saved to %s\n", outputPath);
+}
+
+int main() {
+    int choice;
+    char inputFile[100], outputFile[100];
+
+    printf("Run-Length Encoding (RLE) Tool\n");
+    printf("1. Compress\n2. Decompress\nChoose an option: ");
+    scanf("%d", &choice);
+    getchar(); // consume newline
+
+    printf("Enter input file path: ");
+    fgets(inputFile, sizeof(inputFile), stdin);
+    inputFile[strcspn(inputFile, "\n")] = '\0';  // Remove newline
+
+    printf("Enter output file path: ");
+    fgets(outputFile, sizeof(outputFile), stdin);
+    outputFile[strcspn(outputFile, "\n")] = '\0';  // Remove newline
+
+    if (choice == 1) {
+        compressFile(inputFile, outputFile);
+    } else if (choice == 2) {
+        decompressFile(inputFile, outputFile);
+    } else {
+        printf("Invalid choice.\n");
+    }
+
+    return 0;
+}
